@@ -6,6 +6,10 @@ log = logging.getLogger(__name__)
 class Scene:
     """Scene template that attaches to SceneTree"""
 
+    _initmethod: callable = None
+    _showmethod: callable = None
+    _hidemethod: callable = None
+
     def __repr__(self):
         return f"{type(self).__name__}"
 
@@ -17,6 +21,8 @@ class Scene:
         self.initialized = False
 
     def run(self):
+        """Initialize and run the scene"""
+
         if not self.initialized:
             self.init()
             self.initialized = True
@@ -25,29 +31,68 @@ class Scene:
             self.current_task = self.default_task
         self.update()
 
-    def update(self):
+    def update(self) -> bool:
+        """Run self.current_task if set.
+        Meant to be called each frame. Returns completion status.
+        """
+
         if self.current_task:
             self.current_task()
+            return True
+        return False
 
-    def show(self, func=None):
-        func = func or self.show
-        self.show = func
+    def init(self) -> bool:
+        """Run method set with @self.initmethod, if available.
+        Meant to be as single-use scene initializer. Returns completion status.
+        """
 
+        if self._initmethod:
+            self._initmethod()
+            return True
+        return False
+
+    def show(self) -> bool:
+        """Run method set with @self.showmethod, if available.
+        Meant to be used each time scene tree switches to this scene.
+        Returns completion status.
+        """
+
+        if self._initmethod:
+            self._initmethod()
+            return True
+        return False
+
+    def hide(self) -> bool:
+        """Run method set with @self.hidemethod, if available.
+        Meant to be used when scene tree switches to another scene.
+        Returns completion status.
+        """
+
+        if self._hidemethod:
+            self._hidemethod()
+            return True
+        return False
+
+    def initmethod(self, func):
         def inner():
-            return func()
+            self._initmethod = func
+            return self._initmethod()
 
-        return inner
+        return inner()
 
-    # Custom init, where you write your stuff
-    # Im not sure about how this and show works :/
-    def init(self, func=None):
-        func = func or self.init
-        self.init = func
-
+    def showmethod(self, func):
         def inner():
-            return func()
+            self._showmethod = func
+            return self._showmethod()
 
-        return inner
+        return inner()
+
+    def hidemethod(self, func):
+        def inner():
+            self._hidemethod = func
+            return self._hidemethod()
+
+        return inner()
 
     # Tasks are things that run each frame within current scene's context
     def task(self, name: str, default: bool = False):
@@ -63,12 +108,10 @@ class Scene:
 
         return inner
 
+    # TODO: maybe distinguish stop and pause? And make it dont actually hide
+    # scene, but pause its execution?
     def stop(self):
         self.hide()
-
-    # This runs when you need to switch to other scene. Usually cleanup stuff
-    def hide(self):
-        pass
 
 
 class SceneTree:

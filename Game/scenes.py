@@ -9,12 +9,12 @@ log = logging.getLogger(__name__)
 sc = Scene("intro")
 
 
-@sc.init
+@sc.initmethod
 def init():
-    # Rescaling font right away
 
-    # #TODO: maybe make load_ functions return stuff aswell?
-    sc.font = game.assets.get_font("./Assets/Fonts/romulus.ttf", 36)
+    # This will load and overwrite "romulus" font in storage
+    # Also rescaling font right away
+    sc.font = game.assets.load_font("./Assets/Fonts/romulus.ttf", 36)
     sc.hit_sound = game.assets.sounds["damage"]
     sc.weapon = entities.Greatsword()
     sc.enemy = entities.Enemy()
@@ -22,7 +22,7 @@ def init():
     sc.sprites = sprite.RenderPlain((sc.enemy, sc.weapon))
 
 
-@sc.show
+@sc.showmethod
 def show():
     sc.background = Surface(game.screen.get_size()).convert()
     sc.background.fill(RGB(255, 255, 255))

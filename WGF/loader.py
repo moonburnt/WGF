@@ -70,6 +70,7 @@ def get_from_files(files: list, loader) -> dict:
     return data
 
 
+# #TODO: rework loaders and storages into things attachable via decorators
 class AssetsLoader:
     """Class dedicated to loading assets from disk"""
 
@@ -105,14 +106,18 @@ class AssetsLoader:
     # Single-item getters/loaders have no try/excepts. At least for now
     def get_sound(self, path) -> mixer.Sound:
         """Get sound from provided path"""
+
         return mixer.Sound(path)
 
-    def load_sound(self, path):
+    def load_sound(self, path) -> mixer.Sound:
         """Load sound from provided path into self.sounds"""
+
         s = self.get_sound(path)
         filename = _get_storage_name(path)
         # No protections/warnings from overwrites for now
         self.sounds[filename] = s
+
+        return s
 
     def get_sounds(
         self,
@@ -122,6 +127,7 @@ class AssetsLoader:
         case_insensitive: bool = False,
     ) -> dict:
         """Get sounds from provided path"""
+
         path = path or self.sounds_directory
         extensions = extensions or self.sound_extensions
 
@@ -142,8 +148,9 @@ class AssetsLoader:
         extensions: list = None,
         include_subdirs: bool = False,
         case_insensitive: bool = False,
-    ):
+    ) -> dict:
         """Load sounds from provided path into self.sounds"""
+
         s = self.get_sounds(
             path=path,
             extensions=extensions,
@@ -153,6 +160,8 @@ class AssetsLoader:
 
         # Python 3.5+ stuff
         self.sounds = {**self.sounds, **s}
+
+        return s
 
     def get_image(
         self,
@@ -190,8 +199,9 @@ class AssetsLoader:
         colorkey: RGB = None,
         has_alpha: bool = True,
         scale: int = None,
-    ):
+    ) -> Surface:
         """Load image from provided path into self.images"""
+
         img = self.get_image(
             path=path,
             colorkey=colorkey,
@@ -200,6 +210,8 @@ class AssetsLoader:
         )
         filename = _get_storage_name(path)
         self.images[filename] = img
+
+        return img
 
     def get_images(
         self,
@@ -234,7 +246,7 @@ class AssetsLoader:
         extensions: list = None,
         include_subdirs: bool = False,
         case_insensitive: bool = False,
-    ):
+    ) -> dict:
         """Load images from provided path into self.images"""
 
         i = self.get_images(
@@ -249,12 +261,15 @@ class AssetsLoader:
 
         self.images = {**self.images, **i}
 
+        return i
+
     def get_font(
         self,
         path,
         size: int = None,
     ) -> pgfont.Font:
         """Get font from provided path"""
+
         # Not best to hardcode it, ikr
         size = size or self.font_size
         return pgfont.Font(path, size)
@@ -263,11 +278,14 @@ class AssetsLoader:
         self,
         path,
         size: int = None,
-    ):
+    ) -> pgfont.Font:
         """Load font from provided path into self.fonts"""
+
         f = self.get_font(path, size)
         filename = _get_storage_name(path)
         self.fonts[filename] = f
+
+        return f
 
     def get_fonts(
         self,
@@ -298,7 +316,7 @@ class AssetsLoader:
         extensions: list = None,
         include_subdirs: bool = False,
         case_insensitive: bool = False,
-    ):
+    ) -> dict:
         """Load fonts from provided path into self.fonts"""
 
         f = self.get_fonts(
@@ -311,14 +329,18 @@ class AssetsLoader:
 
         self.fonts = {**self.fonts, **f}
 
+        return f
+
     def load_all(self):
         """Load all valid media from provided paths into relevant storages"""
+
         self.load_images()
         self.load_sounds()
         self.load_fonts()
 
     def clean_all(self):
         """Clean all local storages"""
+
         self.images = {}
         self.sounds = {}
         self.fonts = {}
