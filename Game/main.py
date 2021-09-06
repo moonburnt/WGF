@@ -22,8 +22,20 @@ def make_game() -> GameWindow:
 
     mygame.assets.load_all()
 
-    from Game import scenes
+    # Modifying tree's updatemethod to implement pause support
+    @mygame.tree.updatemethod
+    def update():
+        for event in mygame.event_handler.events:
+            if event.type == base.pgl.KEYDOWN:
+                if event.key == base.pgl.K_p:
+                    if mygame.tree._current_child:
+                        if mygame.tree._current_child.playing:
+                            mygame.tree._current_child.pause()
+                        else:
+                            mygame.tree._current_child.play()
 
-    mygame.tree.add(scenes.sc, default=True)
+    from Game.scenes import intro
+
+    mygame.tree.add(intro.sc, default=True)
 
     return mygame

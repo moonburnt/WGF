@@ -116,18 +116,11 @@ class GameWindow:
         self.initialized = True
 
         WGF.game = self
+        WGF.tree = self.tree
 
     @classmethod
     def context(cls):
         return GameContext(cls)
-
-    # def scene(self, name:str):
-    #     def inner(scene):
-    #         def wrapper():
-    #             self.tree[name] = scene
-    #             return self.tree[name]
-    #         return wrapper
-    #     return inner
 
     # #TODO: rewrite size's hint to accept both tuples and sizes
     def configure(self, size: WGF.Size = None, vsync: bool = None, **window_modes):
@@ -168,8 +161,7 @@ class GameWindow:
             log.warning("Unable to run game - GameWindow is not initialized")
             return
 
-        if self.tree.default:
-            self.tree.switch(self.tree.default)
+        self.tree.play()
 
         while True:
             self.clock.tick(self.clock_speed)
@@ -178,15 +170,6 @@ class GameWindow:
                 if event.type == pgl.QUIT:
                     log.info("Closing the game. Bye :(")
                     return
-            self.update()
-
-    def update(self):
-        """Update window's content.
-
-        Under normal circuimstances, it runs automatically from self.run() routine.
-        """
-        # Update current scene's image
-        if self.tree.current:
-            self.tree.current.update()
-        # This function redraws the screen, updating whats visible to player
-        self.window.flip()
+            self.tree.update()
+            # This will update whats visible on screen to player
+            self.window.flip()

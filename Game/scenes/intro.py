@@ -11,7 +11,6 @@ sc = Scene("intro")
 
 @sc.initmethod
 def init():
-
     # This will load and overwrite "romulus" font in storage
     # Also rescaling font right away
     sc.font = game.assets.load_font("./Assets/Fonts/romulus.ttf", 36)
@@ -20,13 +19,12 @@ def init():
     sc.enemy = entities.Enemy()
     # Group of sprites to render together. Later appears above previous
     sc.sprites = sprite.RenderPlain((sc.enemy, sc.weapon))
+    sc.background = Surface(game.screen.get_size()).convert()
+    sc.background.fill(RGB(255, 255, 255))
 
 
 @sc.showmethod
 def show():
-    sc.background = Surface(game.screen.get_size()).convert()
-    sc.background.fill(RGB(255, 255, 255))
-
     # Setting up text, text's antialias and its position on screen
     text = sc.font.render("Hello, World", False, (10, 10, 10))
     # Getting text's rectangle - local version of node - to drag/resize item
@@ -46,7 +44,7 @@ def show():
     game.mouse.set_visible(False)
 
 
-@sc.task("updater", default=True)
+@sc.updatemethod
 def updater():
     for event in game.event_handler.events:
         if event.type == base.pgl.MOUSEBUTTONDOWN:
