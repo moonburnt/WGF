@@ -18,6 +18,7 @@ def make_game() -> GameWindow:
         image_extensions=[".png"],
         sound_extensions=[".ogg"],
     )
+    mygame.settings["vsync"] = True
     mygame.init()
 
     mygame.assets.load_all()

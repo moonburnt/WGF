@@ -1,8 +1,8 @@
-from pygame import image, mixer, transform, Surface
+from pygame import image, mixer, transform, Surface, Rect, SRCALPHA
 from pygame import font as pgfont
 from os import listdir
 from os.path import isfile, isdir, basename, join, splitext
-from WGF.common import RGB
+from WGF.common import RGB, Size
 import logging
 
 log = logging.getLogger(__name__)
@@ -68,6 +68,86 @@ def get_from_files(files: list, loader) -> dict:
         data[filename] = item
 
     return data
+
+
+def _is_power_of_two(num) -> bool:
+    return num and not (num & (num - 1))
+
+
+class InvalidSpriteSize(Exception):
+    """Exception thrown if requested sprite size doesnt fit spritesheet's size"""
+
+    def __init__(self, size: Size):
+        message = f"Spritesheet wont cut into perfect {size} chunks"
+        super().__init__(message)
+
+
+class Spritesheet:
+    """Spritesheet holder"""
+
+    sprites: dict = {}
+
+    def __init__(self, image: Surface):
+        self.image = image
+
+    @classmethod
+    def from_file(cls, path, colorkey: RGB = None, has_alpha: bool = True):
+        """Get spritesheet from provided path"""
+
+        img = image.load(path)
+
+        if has_alpha and img.get_alpha():
+            img = img.convert_alpha()
+        else:
+            img = img.convert()
+
+        if colorkey is not None:
+            img.set_colorkey(colorkey.astuple(), RLEACCEL)
+
+        return cls(img)
+
+    # #TODO: add args to skip some pixels on right/bottom of sheet
+    # #TODO: maybe rename it to "to_sprites", since it turns whole img into these?
+    def get_sprites(
+        self, size: Size, store: bool = True, overwrite_known: bool = False
+    ) -> list:
+        """Get all sprites of provided size from image, if possible"""
+
+        x, y = size
+
+        img_x, img_y = self.image.get_size()
+        if img_x % x or img_y % y:
+            raise InvalidSpriteSize(size)
+
+        columns = int(img_x / x)
+        rows = int(img_y / y)
+
+        if not _is_power_of_two(columns) or not _is_power_of_two(rows):
+            raise InvalidSpriteSize(size)
+
+        items = []
+        for row in range(0, rows):
+            log.debug(f"Processing row {row}")
+            for column in range(0, columns):
+                log.debug(f"Processing column {column}")
+                sprite_x = column * x
+                sprite_y = row * y
+
+                rect = Rect(sprite_x, sprite_y, x, y)
+                if f"{rect.size}" in self.sprites and not overwrite_known:
+                    sprite = self.sprites[f"{rect.size}"]
+                else:
+                    if self.image.get_alpha():
+                        sprite = Surface(rect.size, SRCALPHA).convert_alpha()
+                    else:
+                        sprite = Surface(rect.size).convert()
+                    sprite.blit(self.image, (0, 0), rect)
+                    if store:
+                        self.sprites[f"{rect.size}"] = sprite
+
+                items.append(sprite)
+
+        return items
 
 
 # #TODO: rework loaders and storages into things attachable via decorators
@@ -181,7 +261,7 @@ class AssetsLoader:
             y = y * scale
             img = transform.scale(img, (x, y))
 
-        if has_alpha:
+        if has_alpha and img.get_alpha():
             img = img.convert_alpha()
         else:
             img = img.convert()

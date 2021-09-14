@@ -1,5 +1,5 @@
 from pygame import mouse, sprite, Surface, display, transform
-from WGF import game
+from WGF import game, loader
 import logging
 
 log = logging.getLogger(__name__)
@@ -27,7 +27,9 @@ class Enemy(Entity):
     angle: int = 0
 
     def __init__(self):
-        self.image = game.assets.images["enemy"]
+        # self.image = game.assets.images["enemy"]
+        sheet = loader.Spritesheet(game.assets.images["enemy"])
+        self.image = sheet.get_sprites((32, 32))[3]
         super().__init__()
 
         # Make it possible for entity to move around screen-sized area
