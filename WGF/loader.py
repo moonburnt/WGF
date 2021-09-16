@@ -134,8 +134,12 @@ class Spritesheet:
                 sprite_y = row * y
 
                 rect = Rect(sprite_x, sprite_y, x, y)
-                if f"{rect.size}" in self.sprites and not overwrite_known:
-                    sprite = self.sprites[f"{rect.size}"]
+                # print(rect.size)
+                if (
+                    f"{sprite_x, sprite_y, x, y}" in self.sprites
+                    and not overwrite_known
+                ):
+                    sprite = self.sprites[f"{sprite_x, sprite_y, x, y}"]
                 else:
                     if self.image.get_alpha():
                         sprite = Surface(rect.size, SRCALPHA).convert_alpha()
@@ -143,7 +147,7 @@ class Spritesheet:
                         sprite = Surface(rect.size).convert()
                     sprite.blit(self.image, (0, 0), rect)
                     if store:
-                        self.sprites[f"{rect.size}"] = sprite
+                        self.sprites[f"{sprite_x, sprite_y, x, y}"] = sprite
 
                 items.append(sprite)
 
