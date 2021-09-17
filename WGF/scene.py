@@ -20,6 +20,7 @@ class Scene:
     _showmethod: callable = None
     _hidemethod: callable = None
     _updatemethod: callable = None
+    _postupdatemethod: callable = None
     _pausemethod: callable = None
 
     def __repr__(self):
@@ -116,6 +117,8 @@ class Scene:
                 self._updatemethod()
             if self._current_child:
                 self._current_child.update()
+            if self._postupdatemethod:
+                self._postupdatemethod()
 
     @require_init
     def show(self) -> bool:
@@ -167,6 +170,13 @@ class Scene:
         def inner():
             self._updatemethod = func
             return self._updatemethod()
+
+        return inner()
+
+    def postupdatemethod(self, func):
+        def inner():
+            self._postupdatemethod = func
+            return self._postupdatemethod()
 
         return inner()
 
