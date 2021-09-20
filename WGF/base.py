@@ -113,10 +113,17 @@ class GameWindow:
         if not self.tree:
             self.tree = WGF.scene.SceneTree()
 
-        self.initialized = True
-
         WGF.game = self
         WGF.tree = self.tree
+        WGF.clock = self.clock
+
+        from WGF.tasks import TaskManager
+
+        self.task_mgr = TaskManager()
+
+        WGF.task_mgr = self.task_mgr
+
+        self.initialized = True
 
     @classmethod
     def context(cls):
@@ -165,6 +172,10 @@ class GameWindow:
 
         while True:
             self.clock.tick(self.clock_speed)
+            # Keep in mind that this instance of task manager runs each frame.
+            # If there is custom pause implementation that require manager to be
+            # paused, its encouraged to create new one on local scene's level
+            self.task_mgr.update()
             self.event_handler.update()
             for event in self.event_handler.events:
                 if event.type == pgl.QUIT:
