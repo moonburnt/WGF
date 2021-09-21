@@ -12,7 +12,6 @@ class Scene:
     """Scene template that attaches to SceneTree"""
 
     _parent = None
-    _childs: dict = {}
     _current_child = None
     _default_child = None
 
@@ -42,6 +41,7 @@ class Scene:
         self.shown = False
         self.playing = False
         self.first_run = True
+        self._childs = {}
 
     # These decorators will check if related functions has been used and perform
     # them, if not
@@ -155,42 +155,42 @@ class Scene:
     def initmethod(self, func):
         def inner():
             self._initmethod = func
-            return self._initmethod()
+            # return self._initmethod()
 
         return inner()
 
     def showmethod(self, func):
         def inner():
             self._showmethod = func
-            return self._showmethod()
+            # return self._showmethod()
 
         return inner()
 
     def updatemethod(self, func):
         def inner():
             self._updatemethod = func
-            return self._updatemethod()
+            # return self._updatemethod()
 
         return inner()
 
     def postupdatemethod(self, func):
         def inner():
             self._postupdatemethod = func
-            return self._postupdatemethod()
+            # return self._postupdatemethod()
 
         return inner()
 
     def hidemethod(self, func):
         def inner():
             self._hidemethod = func
-            return self._hidemethod()
+            # return self._hidemethod()
 
         return inner()
 
     def pausemethod(self, func):
         def inner():
             self._pausemethod = func
-            return self._pausemethod()
+            # return self._pausemethod()
 
         return inner()
 

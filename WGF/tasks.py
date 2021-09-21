@@ -17,16 +17,29 @@ class TaskStatus(Enum):
 class Task:
     """Basic task that does some stuff each frame"""
 
-    def __init__(self, name: str, task_method: callable, task_args: tuple = tuple()):
+    def __init__(
+        self,
+        name: str,
+        task_method: callable,
+        task_args: list = [],
+        stop_condition=None,
+    ):
         self.name = name
         self.task_method = task_method
         self.task_args = task_args
         self.status = TaskStatus.active
+        self.stop_condition = stop_condition
 
     def update(self):
-        if self.status is TaskStatus.active:
-            self.task_args = self.task_method(*self.task_args)
-            return self.task_args
+        if self.status is not TaskStatus.active:
+            return
+
+        args = []
+        answ = self.task_method(*self.task_args)
+        self.task_args = args.extend(answ) if answ is not None else args
+        if self.stop_condition is not None and self.task_args == self.stop_condition:
+            self.status = TaskStatus.stopped
+        return self.task_args
 
     def stop(self):
         self.status = TaskStatus.stopped
@@ -35,39 +48,20 @@ class Task:
         self.status = TaskStatus.paused
 
 
-# class FiniteTask(Task):
-#     """Task that can be interrupted at some point"""
-
-#     def __init__(self, name:str, task_method: callable, repeat: int = -1, task_args: tuple = tuple()):
-#         self.name = name
-#         self.task_method = task_method
-#         self.task_args = task_args
-#         self.status = TaskStatus.active
-
-#         # Idea is similar to panda's tasks.
-#         # Repeat counter is int that can be from -1 to any positive value
-#         self.repeat = repeat
-
-#     def do_task(self):
-#         args = self.task_method(*self.task_args)
-#         if args:
-#             self.repeat = args[0]
-#             self.task_args = args[1:]
-#         else:
-#             self.repeat = 0
-#             self.task_args = []
-#             self.status = TaskStatus.stopped
-
-
 class TimedTask(Task):
     """Task that only triggers once per specified amount of time"""
 
     def __init__(
-        self, name: str, task_method: callable, speed: int, task_args: tuple = tuple()
+        self,
+        name: str,
+        task_method: callable,
+        speed: int,
+        task_args: list = [],
+        stop_condition=None,
     ):
         self.speed = speed
         self.time = speed
-        super().__init__(name, task_method, task_args)
+        super().__init__(name, task_method, task_args, stop_condition)
 
     def update(self):
         if self.status is not TaskStatus.active:
@@ -79,8 +73,11 @@ class TimedTask(Task):
         else:
             return
 
-        self.task_args = self.task_args or tuple()
-        self.task_args = self.task_method(*self.task_args)
+        args = []
+        answ = self.task_method(*self.task_args)
+        self.task_args = args.extend(answ) if answ is not None else args
+        if self.stop_condition is not None and self.task_args == self.stop_condition:
+            self.status = TaskStatus.stopped
         return self.task_args
 
 
@@ -95,13 +92,14 @@ class TaskManager:
         for t in self.tasks:
             self.tasks[t].update()
 
-    def task(self, name: str):
+    def task(self, name: str, stop_condition=None):
         def wrapper(func):
             def inner(*args):
                 task = Task(
                     name=name,
                     task_method=func,
                     task_args=args,
+                    stop_condition=stop_condition,
                 )
                 self.tasks[name] = task
                 return self.tasks[name].update()
@@ -110,7 +108,7 @@ class TaskManager:
 
         return wrapper
 
-    def timed_task(self, name: str, speed: int):
+    def timed_task(self, name: str, speed: int, stop_condition=None):
         def wrapper(func):
             def inner(*args):
                 task = TimedTask(
@@ -118,6 +116,7 @@ class TaskManager:
                     speed=speed,
                     task_method=func,
                     task_args=args,
+                    stop_condition=stop_condition,
                 )
                 self.tasks[name] = task
                 return self.tasks[name].update()

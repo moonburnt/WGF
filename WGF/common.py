@@ -76,12 +76,13 @@ class RGB(ConvertableType):
 # Size is used for abstract height and width values
 @dataclass(frozen=True)
 class Size(ConvertableType):
-    height: int
     width: int
+    height: int
 
 
 # While point is used to reffer to some specific x, y location on screen
-@dataclass(frozen=True)
+# @dataclass(frozen=True)
+@dataclass
 class Point(ConvertableType):
     x: int
     y: int
