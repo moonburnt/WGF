@@ -47,26 +47,87 @@ class GameContext:
         WGF.current_game = None
 
 
+class SettingsManager:
+    """Settings manager"""
+
+    def __init__(self):
+        # Default window rendering settings, which should be used as fallback
+        self._default = {
+            # #TODO: maybe also add display?
+            "size": WGF.Size(1280, 720),
+            "vsync": False,
+            # These must be set to "False" out of box.
+            "window_modes": {
+                "fullscreen": False,
+                "borderless": False,
+                "hardware_acceleration": False,
+                "opengl": False,
+                "resizable": False,
+                "hidden": False,
+                "double_buffer": False,
+                "scaled": False,
+            },
+        }
+        self.reset()
+
+    def __getitem__(self, key: str):
+        return self._storage[key]
+
+    def __setitem__(self, key: str, value):
+        self._storage[key] = value
+
+    def reset(self):
+        """Reset settings to defaults"""
+        self._storage = self._default.copy()
+
+    def set_default(self, key: str, value):
+        """Set default value of provided argument"""
+        self._default[key] = value
+
+        # Also updating storage, in case it didnt have this
+        if not key in self._storage:
+            self._storage[key] = value
+
+    def from_dict(self, data: dict):
+        """Update settings from provided dict"""
+        self._storage = self._storage | data
+
+    def to_dict(self) -> dict:
+        """Dump current settings into dictionary"""
+        return self._storage.copy()
+
+    def from_toml(self, filepath):
+        """Update settings from provided .toml file"""
+
+        try:
+            import toml
+
+            data = toml.load(filepath)
+        except Exception as e:
+            log.warning(f"Unable to update settings from {filepath} toml: {e}")
+        else:
+            self.from_dict(data)
+            log.debug(f"Successfully updated settings to {self._storage}")
+
+    def to_toml(self, filepath):
+        """Dump current settings to provided .toml file"""
+
+        try:
+            import toml
+
+            with open(filepath, "w") as f:
+                toml.dump(self._storage, f)
+        except Exception as e:
+            log.warning(f"Unable to save settings to {filepath} toml: {e}")
+        else:
+            log.debug(f"Successfully saved settings to {filepath}")
+
+
 class GameWindow:
     """Base game window instance"""
 
-    # Window rendering settings. To be overwritten from self.configure()
-    settings: dict = {
-        # #TODO: maybe also add display?
-        "size": WGF.Size(1280, 720),
-        "vsync": False,
-        # These must be set to "False" out of box.
-        "window_modes": {
-            "fullscreen": False,
-            "borderless": False,
-            "hardware_acceleration": False,
-            "opengl": False,
-            "resizable": False,
-            "hidden": False,
-            "double_buffer": False,
-            "scaled": False,
-        },
-    }
+    # Path to game's icon
+    icon_path = None
 
     # This will ensure game doesnt run faster than 60fps
     clock_speed: int = 60
@@ -86,6 +147,7 @@ class GameWindow:
         self.title = title
         # This is set from custom init
         self.initialized = False
+        self.settings = SettingsManager()
 
     def init(self):
         """Setup game window. Basically custom init"""
@@ -106,9 +168,21 @@ class GameWindow:
             self.event_handler = EventHandler()
         # Setting up window's title
         self.window.set_caption(self.title)
-        # Configure is separate function, coz it may be run while game is already
-        # active, to change stuff
+        # Configure is separate function, coz we may want to run it while game
+        # is already active, to change stuff (say, from settings menu)
         self.configure()
+
+        # Setting game's icon, if available. This should be done after configuration
+        if self.icon_path:
+            try:
+                i = pygame.image.load(self.icon_path).convert()
+            except Exception as e:
+                log.warning(f"Unable to set icon: {e}")
+                self.icon = None
+            else:
+                self.icon = i
+                self.window.set_icon(self.icon)
+
         # Scene tree
         if not self.tree:
             self.tree = WGF.scene.SceneTree()
@@ -149,7 +223,9 @@ class GameWindow:
         # Doing it in separate loop to preserve existing settings
         for f in list(self.settings["window_modes"]):
             if self.settings["window_modes"][f]:
-                flags.append(getattr(WindowMode, f))
+                mode = getattr(WindowMode, f, None)
+                if mode is not None:
+                    flags.append(mode.value)
         flags = reduce(ior, flags)
 
         # Game's screen canvas. Its size is the actual size of window.
