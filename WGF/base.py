@@ -47,6 +47,19 @@ class GameContext:
         WGF.current_game = None
 
 
+def rmerge(x: dict, y: dict) -> dict:
+    """Merge two dicts recursively"""
+
+    new = x.copy()
+    for i in y:
+        val = y[i]
+        if i in new and isinstance(new[i], dict) and isinstance(val, dict):
+            val = merge(new[i], val)
+        new[i] = val
+
+    return new
+
+
 class SettingsManager:
     """Settings manager"""
 
@@ -90,7 +103,9 @@ class SettingsManager:
 
     def from_dict(self, data: dict):
         """Update settings from provided dict"""
-        self._storage = self._storage | data
+
+        # Using recursive merge coz otherwise window_modes may be butchered
+        self._storage = rmerge(self._storage, data)
 
     def to_dict(self) -> dict:
         """Dump current settings into dictionary"""
