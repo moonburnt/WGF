@@ -49,12 +49,23 @@ class ConvertableType:
         return asdict(self)
 
 
-# #TODO: maybe add alpha channel version?
+def clamp(val, minval, maxval):
+    """Get value in between provided range"""
+
+    return max(min(maxval, val), minval)
+
+
 @dataclass(frozen=True)
 class RGB(ConvertableType):
-    Red: int = 0
-    Green: int = 0
-    Blue: int = 0
+    red: int = 0
+    green: int = 0
+    blue: int = 0
+
+    # Ensuring our values will remain in valid RGB range
+    def __post_init__(self):
+        items = vars(self)
+        for i in items:
+            object.__setattr__(self, i, clamp(items[i], 0, 255))
 
     @classmethod
     def from_hex(cls, color: str):
@@ -72,6 +83,17 @@ class RGB(ConvertableType):
 
         return cls(r, g, b)
 
+    def to_hex(self) -> str:
+        hx = "#"
+        for color in (self.red, self.green, self.blue):
+            hx += "%02x" % color
+        return hx
+
+
+@dataclass(frozen=True)
+class RGBA(RGB):
+    alpha: int = 255
+
 
 # Size is used for abstract height and width values
 @dataclass(frozen=True)
@@ -86,7 +108,3 @@ class Size(ConvertableType):
 class Point(ConvertableType):
     x: int
     y: int
-
-
-# class ConfigManager:
-#

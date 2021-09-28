@@ -54,7 +54,7 @@ def rmerge(x: dict, y: dict) -> dict:
     for i in y:
         val = y[i]
         if i in new and isinstance(new[i], dict) and isinstance(val, dict):
-            val = merge(new[i], val)
+            val = rmerge(new[i], val)
         new[i] = val
 
     return new

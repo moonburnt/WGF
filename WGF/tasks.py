@@ -19,6 +19,8 @@ class Timer:
     """Basic timer that should be updated each frame by task manager"""
 
     def __init__(self, ms: int):
+        # Ensuring no negative values can be passed
+        ms = ms if ms >= 0 else 0
         self.time_left = ms
         self._time = ms
         self.status = TaskStatus.active
