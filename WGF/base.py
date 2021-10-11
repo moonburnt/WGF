@@ -34,6 +34,67 @@ class EventHandler:
         self.events = pygame.event.get()
 
 
+class Camera:
+    """Simple camera node"""
+
+    def __init__(self, pos: WGF.Point = WGF.Point(0, 0)):
+        self.pos = pos
+
+
+class NodeBase:
+    def __init__(self, name):
+        self.name = name
+        self._children = {}
+
+    def __repr__(self):
+        return f"{type(self).__name__}"
+
+    def add_child(self, node, name: str = None, show: bool = True):
+        # if isinstance(node, Node):
+        node.init()
+        if show:
+            node.show()
+        name = name or node.name
+        self._children[name] = node
+
+    @property
+    def children(self):
+        # This isnt the best way to handle it, but I want to return children as
+        # read-only property, so it will do... I guess
+        return tuple(self._children.values())
+
+    def __setitem__(self, key: str, value):
+        value.init()
+        self._children[key] = value
+
+    def __getitem__(self, key: str):
+        return self._children[key]
+
+    def draw(self):
+        pass
+
+    def __iter__(self):
+        for var in self._children:
+            yield var, self._children[var]
+
+    def __delitem__(self, key):
+        del self._children[key]
+
+
+class SceneTree(NodeBase):
+    def __init__(self):
+        super().__init__(name="root")
+        self.draw_list = []
+
+    def update(self):
+        self.draw_list = []
+        for item in self._children.values():
+            item.update()
+
+        for i in self.draw_list:
+            i.draw()
+
+
 class GameContext:
     def __init__(self, cls):
         self.game = cls
@@ -154,6 +215,7 @@ class GameWindow:
     assets = None
     tree = None
     event_handler = None
+    camera = None
 
     def __init__(self, title: str = "My Game"):
         log.debug("Initializing pygame")
@@ -163,6 +225,7 @@ class GameWindow:
         # This is set from custom init
         self.initialized = False
         self.settings = SettingsManager()
+        self.active = False
 
     def init(self):
         """Setup game window. Basically custom init"""
@@ -198,11 +261,15 @@ class GameWindow:
                 self.icon = i
                 self.window.set_icon(self.icon)
 
+        WGF.game = self
         # Scene tree
         if not self.tree:
-            self.tree = WGF.scene.SceneTree()
+            self.tree = SceneTree()
 
-        WGF.game = self
+        if not self.camera:
+            self.camera = Camera()
+        WGF.camera = self.camera
+
         WGF.tree = self.tree
         WGF.clock = self.clock
 
@@ -253,15 +320,20 @@ class GameWindow:
 
         log.debug(f"Window's settings has been set to {self.settings}")
 
+    def exit(self):
+        self.active = False
+        log.info("Closing the game. Bye :(")
+        pygame.quit()
+
     def run(self):
         """Run the updater routine. Can only be used once"""
         if not self.initialized:
             log.warning("Unable to run game - GameWindow is not initialized")
             return
 
-        self.tree.play()
-
-        while True:
+        self.active = True
+        # while True:
+        while self.active:
             self.clock.tick(self.clock_speed)
             # Keep in mind that this instance of task manager runs each frame.
             # If there is custom pause implementation that require manager to be
@@ -270,8 +342,10 @@ class GameWindow:
             self.event_handler.update()
             for event in self.event_handler.events:
                 if event.type == pgl.QUIT:
-                    log.info("Closing the game. Bye :(")
+                    # self.exit()
                     return
             self.tree.update()
             # This will update whats visible on screen to player
             self.window.flip()
+
+        self.exit()

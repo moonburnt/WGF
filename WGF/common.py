@@ -108,3 +108,10 @@ class Size(ConvertableType):
 class Point(ConvertableType):
     x: int
     y: int
+
+
+def Counter(start: int = 0):
+    x = start - 1
+    while True:
+        x += 1
+        yield x

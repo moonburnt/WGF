@@ -246,7 +246,7 @@ class Animation:
     def __getitem__(self, key: int):
         return self.sprites[key]
 
-    def next(self):
+    def update(self):
         if not self.timer.update():
             return None
         self.timer.restart()
