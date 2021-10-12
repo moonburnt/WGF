@@ -291,7 +291,7 @@ class Scene(Node):
 
     def __init__(self, name: str, background: Surface = None):
         self.background = background
-        super().__init__(name="root")
+        super().__init__(name)
 
     def update(self) -> bool:
         if not self.active:
@@ -343,3 +343,43 @@ class Cursor(Node):
     @property
     def realpos(self):
         return self.rect.get_pos()
+
+
+class Button(TextNode):
+    """Simple button, that can be clicked"""
+
+    def __init__(
+        self,
+        name: str,
+        text: str,
+        font: font.Font,
+        clickmethod: callable = None,
+        antialiasing: bool = True,
+        pos: Point = Point(0, 0),
+        color: RGB = (0, 0, 0),
+        frame: Surface = None,
+        distance: float = 0.0,
+        align: Align = Align.center,
+    ):
+        super().__init__(
+            name=name,
+            text=text,
+            font=font,
+            antialiasing=antialiasing,
+            pos=pos,
+            color=color,
+            frame=frame,
+            distance=distance,
+            align=align,
+        )
+        self._clickmethod = clickmethod
+
+    def clickmethod(self, func):
+        def inner():
+            self._clickmethod = func
+
+        return inner()
+
+    def on_click(self):
+        if self._clickmethod:
+            self._clickmethod()

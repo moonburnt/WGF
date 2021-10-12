@@ -2,6 +2,7 @@ import pygame
 from operator import ior
 from functools import reduce
 from enum import Enum
+from time import sleep
 import WGF
 
 # Importing local pygame vars (usually in caps), without which "while True" fails
@@ -323,6 +324,7 @@ class GameWindow:
     def exit(self):
         self.active = False
         log.info("Closing the game. Bye :(")
+        sleep(0.5)
         pygame.quit()
 
     def run(self):
@@ -342,8 +344,7 @@ class GameWindow:
             self.event_handler.update()
             for event in self.event_handler.events:
                 if event.type == pgl.QUIT:
-                    # self.exit()
-                    return
+                    self.active = False
             self.tree.update()
             # This will update whats visible on screen to player
             self.window.flip()
