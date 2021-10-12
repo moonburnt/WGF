@@ -3,9 +3,18 @@ from WGF.base import NodeBase
 from WGF.tasks import Animation
 from WGF.common import Counter
 from pygame import Surface, font, mouse
+from enum import Enum
 import logging
 
 log = logging.getLogger(__name__)
+
+# Aligns to be used with some nodes. For now, not everything allowed by pygame
+# is implemented - just what Im using personally #TODO
+class Align(Enum):
+    center = 0
+    topleft = 1
+    topright = 2
+
 
 # #TODO: add generic node stuff (path/parent, reparenting etc) to node
 # #TODO: add something like show_queue, coz right now showmethod is triggered
@@ -59,13 +68,6 @@ class Node(NodeBase):
 
         return inner()
 
-    # def require_init(func):
-    #     def inner(self, *args, **kwargs):
-    #         self.init()
-    #         return func(self, *args, **kwargs)
-
-    #     return inner
-
     def init(self):
         """Run method set with @self.initmethod, if available.
         Meant to be as single-use scene initializer.
@@ -76,9 +78,7 @@ class Node(NodeBase):
         if self._initmethod:
             self._initmethod()
         self.initialized = True
-        # self.show()
 
-    # @require_init
     def update(self) -> bool:
         # #TODO: it may be wiser to, instead of doing things recursively,
         # add all initialized and active nodes to game tree's list and iterate
@@ -140,7 +140,14 @@ class Node(NodeBase):
 
 
 class VisualNode(Node):
-    def __init__(self, name: str, surface: Surface, pos: Point, distance: float = 0.0):
+    def __init__(
+        self,
+        name: str,
+        surface: Surface,
+        pos: Point,
+        distance: float = 0.0,
+        align: Align = Align.center,
+    ):
         self.surface = surface
         self.rect = self.surface.get_rect()
         # Distance means distance from camera. Its float that should (under normal
@@ -149,7 +156,7 @@ class VisualNode(Node):
         # moves together with camera. Its not recommended to set non-default
         # distance to moving targets tho
         self.distance = distance
-
+        self.align = align
         self.pos = pos
         super().__init__(name)
 
@@ -176,10 +183,17 @@ class VisualNode(Node):
     @pos.setter
     def pos(self, pos: Point):
         self._pos = pos
-        # self.rect.x = int(WGF.camera.pos.x * self.distance + self.pos.x)
-        self.rect.centerx = int(camera.pos.x * self.distance + self.pos.x)
-        # self.rect.y = int(WGF.camera.pos.y * self.distance + self.pos.y)
-        self.rect.centery = int(camera.pos.y * self.distance + self.pos.y)
+        if self.align is Align.topleft:
+            self.rect.x = int(camera.pos.x * self.distance + self.pos.x)
+            self.rect.y = int(camera.pos.y * self.distance + self.pos.y)
+        elif self.align is Align.topright:
+            self.rect.topright = (
+                int(camera.pos.x * self.distance + self.pos.x),
+                int(camera.pos.y * self.distance + self.pos.y),
+            )
+        else:
+            self.rect.centerx = int(camera.pos.x * self.distance + self.pos.x)
+            self.rect.centery = int(camera.pos.y * self.distance + self.pos.y)
 
     @property
     def realpos(self):
@@ -200,6 +214,7 @@ class TextNode(VisualNode):
         color: RGB = (0, 0, 0),
         frame: Surface = None,
         distance: float = 0.0,
+        align: Align = Align.center,
     ):
         self.font = font
         self.antialiasing = antialiasing
@@ -210,6 +225,7 @@ class TextNode(VisualNode):
             pos=pos,
             distance=distance,
             name=name,
+            align=align,
         )
 
         self.text = text
