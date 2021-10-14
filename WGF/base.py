@@ -38,8 +38,8 @@ class EventHandler:
 class Camera:
     """Simple camera node"""
 
-    def __init__(self, pos: WGF.Point = WGF.Point(0, 0)):
-        self.pos = pos
+    def __init__(self, pos: WGF.Point = None):
+        self.pos = pos or WGF.Point(0, 0)
 
 
 class NodeBase:
@@ -65,8 +65,7 @@ class NodeBase:
         return tuple(self._children.values())
 
     def __setitem__(self, key: str, value):
-        value.init()
-        self._children[key] = value
+        self.add_child(node=value, name=key)
 
     def __getitem__(self, key: str):
         return self._children[key]

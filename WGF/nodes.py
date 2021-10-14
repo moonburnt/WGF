@@ -210,7 +210,7 @@ class TextNode(VisualNode):
         text: str,
         font: font.Font,
         antialiasing: bool = True,
-        pos: Point = Point(0, 0),
+        pos: Point = None,
         color: RGB = (0, 0, 0),
         frame: Surface = None,
         distance: float = 0.0,
@@ -222,7 +222,7 @@ class TextNode(VisualNode):
 
         super().__init__(
             surface=self.font.render(text, self.antialiasing, self.color),
-            pos=pos,
+            pos=pos or Point(0, 0),
             distance=distance,
             name=name,
             align=align,
@@ -355,7 +355,7 @@ class Button(TextNode):
         font: font.Font,
         clickmethod: callable = None,
         antialiasing: bool = True,
-        pos: Point = Point(0, 0),
+        pos: Point = None,
         color: RGB = (0, 0, 0),
         frame: Surface = None,
         distance: float = 0.0,

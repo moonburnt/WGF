@@ -55,13 +55,13 @@ def _get_storage_name(filename: str) -> str:
 
 # Idea is the same as in panda3d - we save files into storage under their
 # base name without extension
-def get_from_files(files: list, loader) -> dict:
+def get_from_files(files: list, loader: callable, loader_kwargs: dict = {}) -> dict:
     """Process provided files with provided loader"""
     data = {}
     for f in files:
         filename = _get_storage_name(f)
         try:
-            item = loader(f)
+            item = loader(f, **loader_kwargs)
         except Exception as e:
             log.warning(f"Unable to load {item}: {e}")
             continue
@@ -85,9 +85,8 @@ class InvalidSpriteSize(Exception):
 class Spritesheet:
     """Spritesheet holder"""
 
-    sprites: dict = {}
-
     def __init__(self, image: Surface):
+        self.sprites = {}
         self.image = image
 
     @classmethod
@@ -164,9 +163,9 @@ class AssetsLoader:
         images_directory: str = None,
         sounds_directory: str = None,
         fonts_directory: str = None,
-        image_extensions: list = [],
-        sound_extensions: list = [],
-        font_extensions: list = [],
+        image_extensions: list = None,
+        sound_extensions: list = None,
+        font_extensions: list = None,
         font_size: int = None,
     ):
         # Path to assets directory
@@ -178,9 +177,9 @@ class AssetsLoader:
         self.fonts_directory = fonts_directory or assets_directory
 
         # Default extensions to seek with loaders of multiple items
-        self.image_extensions = image_extensions
-        self.sound_extensions = sound_extensions
-        self.font_extensions = font_extensions
+        self.image_extensions = image_extensions or []
+        self.sound_extensions = sound_extensions or []
+        self.font_extensions = font_extensions or []
 
         # Default font size. Ikr its not best to hardcode values, but whatever
         self.font_size = font_size or 10
@@ -319,7 +318,13 @@ class AssetsLoader:
             case_insensitive=case_insensitive,
         )
 
-        return get_from_files(files, self.get_image)
+        kwargs = {
+            "colorkey": colorkey,
+            "has_alpha": has_alpha,
+            "scale": scale,
+        }
+
+        return get_from_files(files, self.get_image, loader_kwargs=kwargs)
 
     def load_images(
         self,

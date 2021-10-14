@@ -52,15 +52,15 @@ class Task:
         self,
         name: str,
         task_method: callable,
-        task_args: list = [],
-        task_kwargs: dict = {},
+        task_args: list = None,
+        task_kwargs: dict = None,
         repeat: bool = True,
         stop_condition=None,
     ):
         self.name = name
         self.task_method = task_method
-        self.task_args = task_args
-        self.task_kwargs = task_kwargs
+        self.task_args = task_args or []
+        self.task_kwargs = task_kwargs or {}
         self.status = TaskStatus.active
         self.stop_condition = stop_condition
         self.repeat = repeat
@@ -93,8 +93,8 @@ class TimedTask(Task):
         name: str,
         task_method: callable,
         speed: int,
-        task_args: list = [],
-        task_kwargs: dict = {},
+        task_args: list = None,
+        task_kwargs: dict = None,
         repeat: bool = True,
         stop_condition=None,
     ):
